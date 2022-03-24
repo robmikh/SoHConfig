@@ -26,7 +26,10 @@
         
         <Grid Grid.Row="1">
             <Grid x:Name="InitGrid">
-                <Button Content="Open File" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OpenFileButton_Click" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="Please select the shipofharkinian.ini file in your game directory" />
+                    <Button Content="Open File" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OpenFileButton_Click" />
+                </StackPanel>
             </Grid>
             <Grid x:Name="ConfigGrid">
                 <GroupBox Header="Controller Bindings">
@@ -54,8 +57,8 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="ResetButton" Content="Reset" Margin="5" MinWidth="75" Click="ResetButton_Click"/>
-                                <Button x:Name="SaveButton" Content="Save" Margin="5" MinWidth="75" Click="SaveButton_Click"/>
+                                <Button x:Name="ResetButton" Content="Reset" Margin="5" MinWidth="75" Click="ResetButton_Click" IsEnabled="False"/>
+                                <Button x:Name="SaveButton" Content="Save" Margin="5" MinWidth="75" Click="SaveButton_Click" IsEnabled="False"/>
                             </StackPanel>
                         </Grid>
 

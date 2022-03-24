@@ -383,12 +383,16 @@ namespace SoHConfig
                 if (controllerInfo != null)
                 {
                     BindingGrid.Visibility = Visibility.Visible;
+                    SaveButton.IsEnabled = true;
+                    ResetButton.IsEnabled = true;
                     _currentController = controllerInfo.Id;
                     UpdateUIToCurrentBinding();
                 }
                 else
                 {
                     BindingGrid.Visibility = Visibility.Collapsed;
+                    SaveButton.IsEnabled = false;
+                    ResetButton.IsEnabled = false;
                     _currentController = null;
                 }
             }
@@ -420,6 +424,7 @@ namespace SoHConfig
         private void OpenFileButton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new OpenFileDialog();
+            dialog.Filter = "INI files | *.ini";
             if (dialog.ShowDialog() == true)
             {
                 var path = dialog.FileName;

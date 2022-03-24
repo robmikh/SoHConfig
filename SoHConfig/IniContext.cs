@@ -56,6 +56,8 @@ namespace SoHConfig
     {
         private string _guid;
         private Dictionary<N64ControllerButton, int> _buttonBindings;
+        private Dictionary<ControllerAxisFloat, float> _floatThresholds;
+        private Dictionary<ControllerAxisInt, int> _intThresholds;
 
         public IReadOnlyDictionary<N64ControllerButton, int> Bindings => _buttonBindings;
 
@@ -63,6 +65,8 @@ namespace SoHConfig
         {
             _guid = guid;
             _buttonBindings = new Dictionary<N64ControllerButton, int>();
+            _floatThresholds = new Dictionary<ControllerAxisFloat, float>();
+            _intThresholds = new Dictionary<ControllerAxisInt, int>();
             foreach (var line in lines)
             {
                 var parts = line.Split('=');
@@ -76,6 +80,57 @@ namespace SoHConfig
                         _buttonBindings.Add(button.Value, buttonBinding);
                     }
                 }
+                else
+                {
+                    var axisFloat = GetAxisFloatFromString(buttonKey);
+                    if (axisFloat != null)
+                    {
+                        if (float.TryParse(buttonValue, out var buttonBinding))
+                        {
+                            _floatThresholds.Add(axisFloat.Value, buttonBinding);
+                        }
+                    }
+                    else
+                    {
+                        var axisInt = GetAxisIntFromString(buttonKey);
+                        if (axisInt != null)
+                        {
+                            if (int.TryParse(buttonValue, out var buttonBinding))
+                            {
+                                _intThresholds.Add(axisInt.Value, buttonBinding);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception($"Unknown config key \"{buttonKey}\"");
+                        }
+                    }
+                }
+            }
+            // Fill in all nonparsable values
+            var buttons = Enum.GetValues<N64ControllerButton>();
+            foreach (var button in buttons)
+            {
+                if (!_buttonBindings.ContainsKey(button))
+                {
+                    _buttonBindings.Add(button, GetDefaultValueForButton(button));
+                }
+            }
+            var axisFloats = Enum.GetValues<ControllerAxisFloat>();
+            foreach (var axis in axisFloats)
+            {
+                if (!_floatThresholds.ContainsKey(axis))
+                {
+                    _floatThresholds.Add(axis, GetDefaultValueForAxisFloat(axis));
+                }
+            }
+            var axisInts = Enum.GetValues<ControllerAxisInt>();
+            foreach (var axis in axisInts)
+            {
+                if (!_intThresholds.ContainsKey(axis))
+                {
+                    _intThresholds.Add(axis, GetDefaultValueForAxisInt(axis));
+                }
             }
         }
 
@@ -83,7 +138,9 @@ namespace SoHConfig
         {
             _guid = guid;
             _buttonBindings = new Dictionary<N64ControllerButton, int>();
-            // TODO: Fill in default bindings
+            _floatThresholds = new Dictionary<ControllerAxisFloat, float>();
+            _intThresholds = new Dictionary<ControllerAxisInt, int>();
+            ResetToDefault();
         }
 
         public void SetButtonBinding(N64ControllerButton button, int value)
@@ -95,6 +152,28 @@ namespace SoHConfig
             else
             {
                 _buttonBindings.Add(button, value);
+            }
+        }
+
+        public void ResetToDefault()
+        {
+            _buttonBindings.Clear();
+            var buttons = Enum.GetValues<N64ControllerButton>();
+            foreach (var button in buttons)
+            {
+                _buttonBindings.Add(button, GetDefaultValueForButton(button));
+            }
+            _floatThresholds.Clear();
+            var axisFloats = Enum.GetValues<ControllerAxisFloat>();
+            foreach (var axis in axisFloats)
+            {
+                _floatThresholds.Add(axis, GetDefaultValueForAxisFloat(axis));
+            }
+            _intThresholds.Clear();
+            var axisInts = Enum.GetValues<ControllerAxisInt>();
+            foreach (var axis in axisInts)
+            {
+                _intThresholds.Add(axis, GetDefaultValueForAxisInt(axis));
             }
         }
 
@@ -185,6 +264,141 @@ namespace SoHConfig
                     return N64ControllerButton.Z;
                 default:
                     return null;
+            }
+        }
+
+        private int GetDefaultValueForButton(N64ControllerButton button)
+        {
+            switch (button)
+            {
+                case N64ControllerButton.CRight:
+                    return 514;
+                case N64ControllerButton.CLeft:
+                    return -514;
+                case N64ControllerButton.CDown:
+                    return 515;
+                case N64ControllerButton.CUp:
+                    return -515;
+                case N64ControllerButton.R:
+                    return 517;
+                case N64ControllerButton.L:
+                    return 9;
+                case N64ControllerButton.DPadRight:
+                    return 14;
+                case N64ControllerButton.DPadLeft:
+                    return 13;
+                case N64ControllerButton.DPadDown:
+                    return 12;
+                case N64ControllerButton.DPadUp:
+                    return 11;
+                case N64ControllerButton.Start:
+                    return 6;
+                case N64ControllerButton.Z:
+                    return 516;
+                case N64ControllerButton.B:
+                    return 1;
+                case N64ControllerButton.A:
+                    return 0;
+                case N64ControllerButton.StickRight:
+                    return 512;
+                case N64ControllerButton.StickLeft:
+                    return -512;
+                case N64ControllerButton.StickDown:
+                    return 513;
+                case N64ControllerButton.StickUp:
+                    return -513;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        private string GetStringFromAxisFloat(ControllerAxisFloat axis)
+        {
+            switch (axis)
+            {
+                case ControllerAxisFloat.LeftX:
+                    return "sdl_controller_axis_leftx_threshold";
+                case ControllerAxisFloat.LeftY:
+                    return "sdl_controller_axis_lefty_threshold";
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        private ControllerAxisFloat? GetAxisFloatFromString(string value)
+        {
+            switch (value)
+            {
+                case "sdl_controller_axis_leftx_threshold":
+                    return ControllerAxisFloat.LeftX;
+                case "sdl_controller_axis_lefty_threshold":
+                    return ControllerAxisFloat.LeftY;
+                default:
+                    return null;
+            }
+        }
+
+        private float GetDefaultValueForAxisFloat(ControllerAxisFloat axis)
+        {
+            switch (axis)
+            {
+                case ControllerAxisFloat.LeftX:
+                    return 16.0f;
+                case ControllerAxisFloat.LeftY:
+                    return 16.0f;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        private string GetStringFromAxisInt(ControllerAxisInt axis)
+        {
+            switch (axis)
+            {
+                case ControllerAxisInt.RightX:
+                    return "sdl_controller_axis_rightx_threshold";
+                case ControllerAxisInt.RightY:
+                    return "sdl_controller_axis_righty_threshold";
+                case ControllerAxisInt.TriggerLeft:
+                    return "sdl_controller_axis_triggerleft_threshold";
+                case ControllerAxisInt.TriggerRight:
+                    return "sdl_controller_axis_triggerright_threshold";
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        private ControllerAxisInt? GetAxisIntFromString(string value)
+        {
+            switch (value)
+            {
+                case "sdl_controller_axis_rightx_threshold":
+                    return ControllerAxisInt.RightX;
+                case "sdl_controller_axis_righty_threshold":
+                    return ControllerAxisInt.RightY;
+                case "sdl_controller_axis_triggerleft_threshold":
+                    return ControllerAxisInt.TriggerLeft;
+                case "sdl_controller_axis_triggerright_threshold":
+                    return ControllerAxisInt.TriggerRight;
+                default:
+                    return null;
+            }
+        }
+
+        private int GetDefaultValueForAxisInt(ControllerAxisInt axis)
+        {
+            switch (axis)
+            {
+                case ControllerAxisInt.RightX:
+                    return 16384;
+                case ControllerAxisInt.RightY:
+                    return 16384;
+                case ControllerAxisInt.TriggerLeft:
+                    return 7680;
+                case ControllerAxisInt.TriggerRight:
+                    return 7680;
+                default:
+                    throw new ArgumentException();
             }
         }
     }

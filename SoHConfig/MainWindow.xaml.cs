@@ -75,6 +75,20 @@ namespace SoHConfig
         Z,
     }
 
+    enum ControllerAxisFloat
+    {
+        LeftX,
+        LeftY,
+    }
+
+    enum ControllerAxisInt
+    {
+        RightX,
+        RightY,
+        TriggerLeft,
+        TriggerRight,
+    }
+
     public partial class MainWindow : Window
     {
         private Thread _inputThread;

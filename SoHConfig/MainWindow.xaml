@@ -41,7 +41,7 @@
 
                             <Grid Grid.Column="0">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
 
@@ -65,6 +65,113 @@
                                         <ToggleButton x:Name="AButton" Grid.Row="0" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="AButton_Click" />
                                         <ToggleButton x:Name="BButton" Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="BButton_Click" />
                                         <ToggleButton x:Name="StartButton" Grid.Row="2" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="StartButton_Click" />
+                                    </Grid>
+                                </GroupBox>
+
+                                <GroupBox Header="DPad" Grid.Row="1">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Up" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Down" Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Left" Grid.Row="2" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Right" Grid.Row="3" Grid.Column="0" Margin="5"/>
+
+                                        <ToggleButton x:Name="DPadUpButton" Grid.Row="0" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="DPadUpButton_Click" />
+                                        <ToggleButton x:Name="DPadDownButton" Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="DPadDownButton_Click" />
+                                        <ToggleButton x:Name="DPadLeftButton" Grid.Row="2" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="DPadLeftButton_Click" />
+                                        <ToggleButton x:Name="DPadRightButton" Grid.Row="3" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="DPadRightButton_Click" />
+                                    </Grid>
+                                </GroupBox>
+                            </Grid>
+
+                            <Grid Grid.Column="1">
+                                <GroupBox Header="Control Stick" >
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Up" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Down" Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Left" Grid.Row="2" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Right" Grid.Row="3" Grid.Column="0" Margin="5"/>
+
+                                        <ToggleButton x:Name="StickUpButton" Grid.Row="0" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="StickUpButton_Click" />
+                                        <ToggleButton x:Name="StickDownButton" Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="StickDownButton_Click" />
+                                        <ToggleButton x:Name="StickLeftButton" Grid.Row="2" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="StickLeftButton_Click" />
+                                        <ToggleButton x:Name="StickRightButton" Grid.Row="3" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="StickRightButton_Click" />
+                                    </Grid>
+                                </GroupBox>
+                            </Grid>
+
+                            <Grid Grid.Column="2">
+                                <GroupBox Header="C Buttons" >
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Up" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Down" Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Left" Grid.Row="2" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Right" Grid.Row="3" Grid.Column="0" Margin="5"/>
+
+                                        <ToggleButton x:Name="CUpButton" Grid.Row="0" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="CUpButton_Click" />
+                                        <ToggleButton x:Name="CDownButton" Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="CDownButton_Click" />
+                                        <ToggleButton x:Name="CLeftButton" Grid.Row="2" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="CLeftButton_Click" />
+                                        <ToggleButton x:Name="CRightButton" Grid.Row="3" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="CRightButton_Click" />
+                                    </Grid>
+                                </GroupBox>
+                            </Grid>
+
+                            <Grid Grid.Column="3">
+                                <GroupBox Header="Triggers" >
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Z" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="L" Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="R" Grid.Row="2" Grid.Column="0" Margin="5"/>
+
+                                        <ToggleButton x:Name="ZButton" Grid.Row="0" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="ZButton_Click" />
+                                        <ToggleButton x:Name="LButton" Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="LButton_Click" />
+                                        <ToggleButton x:Name="RButton" Grid.Row="2" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="RButton_Click" />
                                     </Grid>
                                 </GroupBox>
                             </Grid>

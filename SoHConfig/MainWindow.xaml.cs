@@ -72,6 +72,7 @@ namespace SoHConfig
         StickLeft,
         StickDown,
         StickUp,
+        Z,
     }
 
     public partial class MainWindow : Window
@@ -122,7 +123,6 @@ namespace SoHConfig
                         binding = new ControllerBinding(controllerInfo.GuidString);
                     }
                     _bindingMap.Add(id, binding);
-                    // TODO: Set the UI buttons with the current binding
                 }
             }
         }
@@ -165,19 +165,19 @@ namespace SoHConfig
             {
                 var uiButton = GetUIButtonForN64Button(_activeButton.Value);
                 var sdlAxis = (SDL.SDL_GameControllerAxis)axis;
-                var displalyString = sdlAxis.ToString().Replace("SDL_CONTROLLER_AXIS_", "");
+                var displayString = sdlAxis.ToString().Replace("SDL_CONTROLLER_AXIS_", "");
                 var modifier = 0;
                 if (value > 0)
                 {
-                    displalyString += "+";
+                    displayString += "+";
                     modifier = 1;
                 }
                 else
                 {
-                    displalyString += "-";
+                    displayString += "-";
                     modifier = -1;
                 }
-                uiButton.Content = displalyString;
+                uiButton.Content = displayString;
                 var binding = _bindingMap[id];
                 binding.SetButtonBinding(_activeButton.Value, (axis + (1 << 9)) * modifier);
                 _activeButton = null;
@@ -228,6 +228,36 @@ namespace SoHConfig
                     return BButton;
                 case N64ControllerButton.Start:
                     return StartButton;
+                case N64ControllerButton.CRight:
+                    return CRightButton;
+                case N64ControllerButton.CLeft:
+                    return CLeftButton;
+                case N64ControllerButton.CDown:
+                    return CDownButton;
+                case N64ControllerButton.CUp:
+                    return CUpButton;
+                case N64ControllerButton.R:
+                    return RButton;
+                case N64ControllerButton.L:
+                    return LButton;
+                case N64ControllerButton.DPadRight:
+                    return DPadRightButton;
+                case N64ControllerButton.DPadLeft:
+                    return DPadLeftButton;
+                case N64ControllerButton.DPadDown:
+                    return DPadDownButton;
+                case N64ControllerButton.DPadUp:
+                    return DPadUpButton;
+                case N64ControllerButton.StickRight:
+                    return StickRightButton;
+                case N64ControllerButton.StickLeft:
+                    return StickLeftButton;
+                case N64ControllerButton.StickDown:
+                    return StickDownButton;
+                case N64ControllerButton.StickUp:
+                    return StickUpButton;
+                case N64ControllerButton.Z:
+                    return ZButton;
                 default:
                     throw new ArgumentException();
             }
@@ -239,38 +269,83 @@ namespace SoHConfig
             {
                 var button = GetUIButtonForN64Button(_activeButton.Value);
                 button.IsChecked = false;
+                _activeButton = null;
+            }
+        }
+
+        private void OnButtonClick(object sender, N64ControllerButton button)
+        {
+            var uiButton = (ToggleButton)sender;
+            if (uiButton.IsChecked == true)
+            {
+                UntoggleActiveButton();
+                _activeButton = button;
+            }
+            else
+            {
+                _activeButton = null;
             }
         }
 
         private void AButton_Click(object sender, RoutedEventArgs e)
         {
-            UntoggleActiveButton();
-            _activeButton = N64ControllerButton.A;
+            OnButtonClick(sender, N64ControllerButton.A);
         }
 
         private void BButton_Click(object sender, RoutedEventArgs e)
         {
-            UntoggleActiveButton();
-            _activeButton = N64ControllerButton.B;
+            OnButtonClick(sender, N64ControllerButton.B);
         }
 
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            UntoggleActiveButton();
-            _activeButton = N64ControllerButton.Start;
+            OnButtonClick(sender, N64ControllerButton.Start);
+        }
+
+        private string GetDisplayStringForBindingValue(int value)
+        {
+            if (value < 0 || value >= (1 << 9))
+            {
+                var axis = Math.Abs(value) - (1 << 9);
+                var sdlAxis = (SDL.SDL_GameControllerAxis)axis;
+                var displayString = sdlAxis.ToString().Replace("SDL_CONTROLLER_AXIS_", "");
+                if (value > 0)
+                {
+                    displayString += "+";
+                }
+                else
+                {
+                    displayString += "-";
+                }
+                return displayString;
+            }
+            else
+            {
+                var sdlButton = (SDL.SDL_GameControllerButton)value;
+                var displayString = sdlButton.ToString().Replace("SDL_CONTROLLER_BUTTON_", "");
+                return displayString;
+            }
         }
 
         private void ControllerComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_iniContext != null)
             {
+                UntoggleActiveButton();
                 var comboBox = (ComboBox)sender;
                 var controllerInfo = comboBox.SelectedItem as ControllerInfo;
                 if (controllerInfo != null)
                 {
                     BindingGrid.Visibility = Visibility.Visible;
                     _currentController = controllerInfo.Id;
-                    var temp = _iniContext.GetBindingForGuidString(controllerInfo.GuidString);
+                    var binding = _bindingMap[controllerInfo.Id];
+
+                    // Set the UI buttons with the current binding
+                    foreach (var (button, value) in binding.Bindings)
+                    {
+                        var uiButton = GetUIButtonForN64Button(button);
+                        uiButton.Content = GetDisplayStringForBindingValue(value);
+                    }
                 }
                 else
                 {
@@ -305,6 +380,81 @@ namespace SoHConfig
             {
                 _cancellationTokenSource.Cancel();
             }
+        }
+
+        private void DPadUpButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.DPadUp);
+        }
+
+        private void DPadDownButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.DPadDown);
+        }
+
+        private void DPadLeftButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.DPadLeft);
+        }
+
+        private void DPadRightButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.DPadRight);
+        }
+
+        private void StickUpButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.StickUp);
+        }
+
+        private void StickDownButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.StickDown);
+        }
+
+        private void StickLeftButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.StickLeft);
+        }
+
+        private void StickRightButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.StickRight);
+        }
+
+        private void CUpButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.CUp);
+        }
+
+        private void CDownButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.CDown);
+        }
+
+        private void CLeftButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.CLeft);
+        }
+
+        private void CRightButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.CRight);
+        }
+
+        private void ZButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.Z);
+        }
+
+        private void LButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.L);
+        }
+
+        private void RButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnButtonClick(sender, N64ControllerButton.R);
         }
     }
 }

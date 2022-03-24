@@ -7,6 +7,8 @@
     <UseWPF>true</UseWPF>
     <Platforms>x64</Platforms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <RepositoryUrl>https://github.com/robmikh/SoHConfig</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using SDL2;
+using Xceed.Wpf.Toolkit;
 
 namespace SoHConfig
 {
@@ -277,6 +278,36 @@ namespace SoHConfig
             }
         }
 
+        private DecimalUpDown GetUIUpDownForAxisFloat(ControllerAxisFloat axis)
+        {
+            switch (axis)
+            {
+                case ControllerAxisFloat.LeftX:
+                    return LeftXThreshold;
+                case ControllerAxisFloat.LeftY:
+                    return LeftYThreshold;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        private IntegerUpDown GetUIUpDownForAxisInt(ControllerAxisInt axis)
+        {
+            switch (axis)
+            {
+                case ControllerAxisInt.RightX:
+                    return RightXThreshold;
+                case ControllerAxisInt.RightY:
+                    return RightYThreshold;
+                case ControllerAxisInt.TriggerLeft:
+                    return TriggerLeftThreshold;
+                case ControllerAxisInt.TriggerRight:
+                    return TriggerRightThreshold;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
         private void UntoggleActiveButton()
         {
             if (_activeButton.HasValue)
@@ -352,19 +383,35 @@ namespace SoHConfig
                 {
                     BindingGrid.Visibility = Visibility.Visible;
                     _currentController = controllerInfo.Id;
-                    var binding = _bindingMap[controllerInfo.Id];
-
-                    // Set the UI buttons with the current binding
-                    foreach (var (button, value) in binding.Bindings)
-                    {
-                        var uiButton = GetUIButtonForN64Button(button);
-                        uiButton.Content = GetDisplayStringForBindingValue(value);
-                    }
+                    UpdateUIToCurrentBinding();
                 }
                 else
                 {
                     BindingGrid.Visibility = Visibility.Collapsed;
                     _currentController = null;
+                }
+            }
+        }
+
+        private void UpdateUIToCurrentBinding()
+        {
+            if (_currentController != null)
+            {
+                var binding = _bindingMap[_currentController.Value];
+                foreach (var (button, value) in binding.ButtonBindings)
+                {
+                    var uiButton = GetUIButtonForN64Button(button);
+                    uiButton.Content = GetDisplayStringForBindingValue(value);
+                }
+                foreach (var (axis, value) in binding.FloatThresholdBindings)
+                {
+                    var uiUpDown = GetUIUpDownForAxisFloat(axis);
+                    uiUpDown.Value = (decimal?)value;
+                }
+                foreach (var (axis, value) in binding.IntThresholdBindings)
+                {
+                    var uiUpDown = GetUIUpDownForAxisInt(axis);
+                    uiUpDown.Value = value;
                 }
             }
         }
@@ -469,6 +516,81 @@ namespace SoHConfig
         private void RButton_Click(object sender, RoutedEventArgs e)
         {
             OnButtonClick(sender, N64ControllerButton.R);
+        }
+
+        private void OnFloatUpDownChanged(object sender, ControllerAxisFloat axis)
+        {
+            if (_currentController != null)
+            {
+                var upDown = (DecimalUpDown)sender;
+                if (upDown.Value.HasValue)
+                {
+                    var binding = _bindingMap[_currentController.Value];
+                    binding.SetAxisFloatBinding(axis, (float)upDown.Value.Value);
+                }
+            }
+        }
+
+        private void OnIntUpDownChanged(object sender, ControllerAxisInt axis)
+        {
+            if (_currentController != null)
+            {
+                var upDown = (IntegerUpDown)sender;
+                if (upDown.Value.HasValue)
+                {
+                    var binding = _bindingMap[_currentController.Value];
+                    binding.SetAxisIntBinding(axis, upDown.Value.Value);
+                }
+            }
+        }
+
+        private void LeftXThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            OnFloatUpDownChanged(sender, ControllerAxisFloat.LeftX);
+        }
+
+        private void LeftYThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            OnFloatUpDownChanged(sender, ControllerAxisFloat.LeftY);
+        }
+
+        private void RightXThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            OnIntUpDownChanged(sender, ControllerAxisInt.RightX);
+        }
+
+        private void RightYThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            OnIntUpDownChanged(sender, ControllerAxisInt.RightY);
+        }
+
+        private void TriggerLeftThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            OnIntUpDownChanged(sender, ControllerAxisInt.TriggerLeft);
+        }
+
+        private void TriggerRightThreshold_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            OnIntUpDownChanged(sender, ControllerAxisInt.TriggerRight);
+        }
+
+        private void ResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentController != null)
+            {
+                var binding = _bindingMap[_currentController.Value];
+                binding.ResetToDefault();
+                UpdateUIToCurrentBinding();
+            }
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentController != null)
+            {
+                var binding = _bindingMap[_currentController.Value];
+                _iniContext.SaveBinding(binding);
+            }
         }
     }
 }

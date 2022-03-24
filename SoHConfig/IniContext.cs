@@ -22,6 +22,43 @@ namespace SoHConfig
         public ControllerBinding? GetBindingForGuidString(string guidString)
         {
             ControllerBinding? binding = null;
+            var range = GetControllerBindingRange(guidString);
+            if (range.HasValue)
+            {
+                var (startIndex, endIndex) = range.Value;
+                var bindingLines = _lines[(startIndex + 1)..endIndex];
+                binding = new ControllerBinding(guidString, bindingLines);
+            }
+            return binding;
+        }
+
+        public void SaveBinding(ControllerBinding binding)
+        {
+            var range = GetControllerBindingRange(binding.GuidString);
+            if (range.HasValue)
+            {
+                var (startIndex, endIndex) = range.Value;
+                // TODO: Make less wasteful
+                var list = _lines.ToList();
+                list.RemoveRange(startIndex, endIndex - startIndex);
+                list.InsertRange(startIndex, binding.GenerateConfig());
+                _lines = list.ToArray();
+                // TODO: Update instead of overwrite
+                File.WriteAllLines(_path, _lines);
+            }
+            else
+            {
+                // TODO: Make less wasteful
+                var list = _lines.ToList();
+                list.AddRange(binding.GenerateConfig());
+                _lines = list.ToArray();
+                // TODO: Update instead of overwrite
+                File.WriteAllLines(_path, _lines);
+            }
+        }
+
+        private (int, int)? GetControllerBindingRange(string guidString)
+        {
             var startIndex = -1;
             var endIndex = -1;
             for (int i = 0; i < _lines.Length; i++)
@@ -34,7 +71,7 @@ namespace SoHConfig
                         var guid = line.Replace("[sdl controller binding ", "").Replace("]", "").Trim();
                         if (guid == guidString)
                         {
-                            startIndex = i + 1;
+                            startIndex = i;
                         }
                     }
                     else
@@ -45,10 +82,9 @@ namespace SoHConfig
             }
             if (startIndex != -1 && endIndex != -1 && startIndex != endIndex)
             {
-                var bindingLines = _lines[startIndex..endIndex];
-                binding = new ControllerBinding(guidString, bindingLines);
+                return (startIndex, endIndex);
             }
-            return binding;
+            return null;
         }
     }
 
@@ -59,7 +95,10 @@ namespace SoHConfig
         private Dictionary<ControllerAxisFloat, float> _floatThresholds;
         private Dictionary<ControllerAxisInt, int> _intThresholds;
 
-        public IReadOnlyDictionary<N64ControllerButton, int> Bindings => _buttonBindings;
+        public string GuidString => _guid;
+        public IReadOnlyDictionary<N64ControllerButton, int> ButtonBindings => _buttonBindings;
+        public IReadOnlyDictionary<ControllerAxisFloat, float> FloatThresholdBindings => _floatThresholds;
+        public IReadOnlyDictionary<ControllerAxisInt, int> IntThresholdBindings => _intThresholds;
 
         public ControllerBinding(string guid, string[] lines)
         {
@@ -155,6 +194,30 @@ namespace SoHConfig
             }
         }
 
+        public void SetAxisFloatBinding(ControllerAxisFloat axis, float value)
+        {
+            if (_floatThresholds.ContainsKey(axis))
+            {
+                _floatThresholds[axis] = value;
+            }
+            else
+            {
+                _floatThresholds.Add(axis, value);
+            }
+        }
+
+        public void SetAxisIntBinding(ControllerAxisInt axis, int value)
+        {
+            if (_intThresholds.ContainsKey(axis))
+            {
+                _intThresholds[axis] = value;
+            }
+            else
+            {
+                _intThresholds.Add(axis, value);
+            }
+        }
+
         public void ResetToDefault()
         {
             _buttonBindings.Clear();
@@ -175,6 +238,34 @@ namespace SoHConfig
             {
                 _intThresholds.Add(axis, GetDefaultValueForAxisInt(axis));
             }
+        }
+
+        internal IEnumerable<string> GenerateConfig()
+        {
+            var list = new List<string>();
+            list.Add($"[sdl controller binding {_guid}]");
+            var buttons = Enum.GetValues<N64ControllerButton>();
+            foreach (var button in buttons)
+            {
+                var value = _buttonBindings[button];
+                var key = GetStringFromButton(button);
+                list.Add($"{key}={value}");
+            }
+            var axisFloats = Enum.GetValues<ControllerAxisFloat>();
+            foreach (var axis in axisFloats)
+            {
+                var value = _floatThresholds[axis];
+                var key = GetStringFromAxisFloat(axis);
+                list.Add($"{key}={value}");
+            }
+            var axisInts = Enum.GetValues<ControllerAxisInt>();
+            foreach (var axis in axisInts)
+            {
+                var value = _intThresholds[axis];
+                var key = GetStringFromAxisInt(axis);
+                list.Add($"{key}={value}");
+            }
+            return list;
         }
 
         private string GetStringFromButton(N64ControllerButton button)

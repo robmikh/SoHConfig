@@ -4,9 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SoHConfig"
+        xmlns:ex="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
         mc:Ignorable="d"
         Closing="Window_Closing"
-        Title="MainWindow" Height="450" Width="800">
+        Title="SoHConfig" Height="450" Width="800">
     <Grid>
         <Grid x:Name="InitGrid">
             <Button Content="Open File" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OpenFileButton_Click" />
@@ -19,16 +20,28 @@
                         <RowDefinition />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal">
-                        <TextBlock Text="Controller" VerticalAlignment="Center" Margin="5"/>
-                        <ComboBox x:Name="ControllerComboBox" MinWidth="250" Margin="5" SelectionChanged="ControllerComboBox_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="Controller" VerticalAlignment="Center" Margin="5"/>
+                            <ComboBox x:Name="ControllerComboBox" MinWidth="250" Margin="5" SelectionChanged="ControllerComboBox_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="ResetButton" Content="Reset" Margin="5" MinWidth="75" Click="ResetButton_Click"/>
+                            <Button x:Name="SaveButton" Content="Save" Margin="5" MinWidth="75" Click="SaveButton_Click"/>
+                        </StackPanel>
+                    </Grid>
 
                     <Grid x:Name="BindingGrid" Grid.Row="1">
                         <Grid>
@@ -152,7 +165,11 @@
                             </Grid>
 
                             <Grid Grid.Column="3">
-                                <GroupBox Header="Triggers" >
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <GroupBox Header="Triggers" Grid.Row="0">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -172,6 +189,38 @@
                                         <ToggleButton x:Name="ZButton" Grid.Row="0" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="ZButton_Click" />
                                         <ToggleButton x:Name="LButton" Grid.Row="1" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="LButton_Click" />
                                         <ToggleButton x:Name="RButton" Grid.Row="2" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" Click="RButton_Click" />
+                                    </Grid>
+                                </GroupBox>
+
+                                <GroupBox Header="Thresholds" Grid.Row="1">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="LeftX" Grid.Row="0" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="LeftY" Grid.Row="1" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="RightX" Grid.Row="2" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="RightY" Grid.Row="3" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Trigger L" Grid.Row="4" Grid.Column="0" Margin="5"/>
+                                        <TextBlock Text="Trigger R" Grid.Row="5" Grid.Column="0" Margin="5"/>
+
+                                        <ex:DecimalUpDown x:Name="LeftXThreshold" Grid.Row="0" Grid.Column="1" Margin="5" ValueChanged="LeftXThreshold_ValueChanged"/>
+                                        <ex:DecimalUpDown x:Name="LeftYThreshold" Grid.Row="1" Grid.Column="1" Margin="5" ValueChanged="LeftYThreshold_ValueChanged"/>
+                                        <ex:IntegerUpDown x:Name="RightXThreshold" Grid.Row="2" Grid.Column="1" Margin="5" ValueChanged="RightXThreshold_ValueChanged"/>
+                                        <ex:IntegerUpDown x:Name="RightYThreshold" Grid.Row="3" Grid.Column="1" Margin="5" ValueChanged="RightYThreshold_ValueChanged"/>
+                                        <ex:IntegerUpDown x:Name="TriggerLeftThreshold" Grid.Row="4" Grid.Column="1" Margin="5" ValueChanged="TriggerLeftThreshold_ValueChanged"/>
+                                        <ex:IntegerUpDown x:Name="TriggerRightThreshold" Grid.Row="5" Grid.Column="1" Margin="5" ValueChanged="TriggerRightThreshold_ValueChanged"/>
                                     </Grid>
                                 </GroupBox>
                             </Grid>

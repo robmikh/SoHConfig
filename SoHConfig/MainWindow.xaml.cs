@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -591,6 +592,22 @@ namespace SoHConfig
                 var binding = _bindingMap[_currentController.Value];
                 _iniContext.SaveBinding(binding);
             }
+        }
+
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            System.Windows.MessageBox.Show(
+                $"SoHConfg v{version}", 
+                "About", 
+                MessageBoxButton.OK, 
+                MessageBoxImage.Information, 
+                MessageBoxResult.OK);
         }
     }
 }

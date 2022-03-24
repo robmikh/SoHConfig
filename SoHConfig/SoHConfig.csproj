@@ -9,6 +9,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <RepositoryUrl>https://github.com/robmikh/SoHConfig</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+	<VersionPrefix>1.1.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>

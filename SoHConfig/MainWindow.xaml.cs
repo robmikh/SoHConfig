@@ -1,62 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 using Microsoft.Win32;
 using SDL2;
 using Xceed.Wpf.Toolkit;
 
 namespace SoHConfig
 {
-    class ControllerInfo
-    {
-        public int Id { get; }
-        public IntPtr Gamepad { get; }
-        public IntPtr Joystick { get; }
-        public string GuidString { get; }
-        public string Name { get; }
-
-        public ControllerInfo(int id)
-        {
-            var gamepad = SDL.SDL_GameControllerOpen(id);
-            if (gamepad.ToInt64() == 0)
-            {
-                throw new ArgumentException("Invalid controller id");
-            }
-
-            var joystick = SDL.SDL_GameControllerGetJoystick(gamepad);
-            //var instanceId = SDL.SDL_JoystickInstanceID(joystick);
-            var guidBuffer = new byte[33];
-            SDL.SDL_JoystickGetGUIDString(SDL.SDL_JoystickGetDeviceGUID(id), guidBuffer, guidBuffer.Length);
-            var guidString = Encoding.UTF8.GetString(guidBuffer).Replace("\0", "");
-            var name = SDL.SDL_JoystickName(joystick);
-
-            Id = id;
-            Gamepad = gamepad;
-            Joystick = joystick;
-            GuidString = guidString;
-            Name = name;
-        }
-    }
-
     enum N64ControllerButton
     {
         A,
@@ -107,10 +63,7 @@ namespace SoHConfig
 
     public partial class MainWindow : Window
     {
-        private Thread _inputThread;
-        private CancellationTokenSource _cancellationTokenSource;
-        private Dispatcher _dispatcher;
-
+        private SDLGamepadListener _gamepadListener;
         private IniContext? _iniContext;
         private Dictionary<int, ControllerBinding> _bindingMap;
 
@@ -125,8 +78,12 @@ namespace SoHConfig
         {
             InitializeComponent();
 
-            _cancellationTokenSource = new CancellationTokenSource();
-            _dispatcher = Dispatcher;
+            _gamepadListener = new SDLGamepadListener(Dispatcher);
+            _gamepadListener.ControllerDeviceAdded += OnControllerDeviceAdded;
+            _gamepadListener.ControllerDeviceRemoved += OnControllerDeviceRemoved;
+            _gamepadListener.ControllerButtonPressed += OnControllerButtonPressed;
+            _gamepadListener.ControllerAxisButtonMotion += OnControllerAxisButtonMotion;
+
             _controllers = new ObservableCollection<ControllerInfo>();
             _controllerMap = new Dictionary<int, ControllerInfo>();
             _bindingMap = new Dictionary<int, ControllerBinding>();
@@ -143,7 +100,7 @@ namespace SoHConfig
             BindingGrid.Visibility = Visibility.Collapsed;
         }
 
-        private void OnControllerDeviceAdded(int id)
+        private void OnControllerDeviceAdded(object sender, int id)
         {
             if (!_controllerMap.ContainsKey(id))
             {
@@ -163,7 +120,7 @@ namespace SoHConfig
             }
         }
 
-        private void OnControllerDeviceRemoved(int id)
+        private void OnControllerDeviceRemoved(object sender, int id)
         {
             if (_controllerMap.ContainsKey(id))
             {
@@ -172,12 +129,11 @@ namespace SoHConfig
                 _controllers.Remove(controllerInfo);
                 _bindingMap.Remove(id);
 
-                SDL.SDL_JoystickClose(controllerInfo.Joystick);
-                SDL.SDL_GameControllerClose(controllerInfo.Gamepad);
+                controllerInfo.Dispose();
             }
         }
 
-        private void OnControllerButtonPressed(int id, byte button)
+        private void OnControllerButtonPressed(object sender, int id, byte button)
         {
             if (_activeButton.HasValue && _currentController.HasValue && id == _currentController.Value)
             {
@@ -185,7 +141,6 @@ namespace SoHConfig
                 var sdlButton = (SDL.SDL_GameControllerButton)button;
                 var displayString = sdlButton.ToString().Replace("SDL_CONTROLLER_BUTTON_", "");
                 uiButton.Content = displayString;
-                var controllerInfo = _controllerMap[id];
 
                 var binding = _bindingMap[id];
                 binding.SetButtonBinding(_activeButton.Value, button);
@@ -195,7 +150,7 @@ namespace SoHConfig
             }
         }
 
-        private void OnControllerAxisButtonMotion(int id, byte axis, short value)
+        private void OnControllerAxisButtonMotion(object sender, int id, byte axis, short value)
         {
             if (_activeButton.HasValue && _currentController.HasValue && id == _currentController.Value)
             {
@@ -218,44 +173,6 @@ namespace SoHConfig
                 binding.SetButtonBinding(_activeButton.Value, (axis + (1 << 9)) * modifier);
                 _activeButton = null;
                 uiButton.IsChecked = false;
-            }
-        }
-
-        private void InputThread()
-        {
-            Thread.CurrentThread.Name = "Input Thread";
-
-            SDL.SDL_SetHint(SDL.SDL_HINT_JOYSTICK_THREAD, "1");
-            SDL.SDL_Init(SDL.SDL_INIT_GAMECONTROLLER);
-
-            var token = _cancellationTokenSource.Token;
-            while (!token.IsCancellationRequested)
-            {
-                SDL.SDL_PollEvent(out var sdlEvent);
-
-                switch (sdlEvent.type)
-                {
-                    case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
-                        _dispatcher.Invoke(OnControllerDeviceAdded, sdlEvent.cdevice.which);
-                        break;
-                    case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
-                        _dispatcher.Invoke(OnControllerDeviceRemoved, sdlEvent.cdevice.which);
-                        break;
-                    case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
-                        _dispatcher.Invoke(OnControllerButtonPressed, sdlEvent.cdevice.which, sdlEvent.cbutton.button);
-                        break;
-                    case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
-                        // Not all controllers reliably hit the max or min values. We don't
-                        // want just any movement to trigger a binding, so we'll pick an 
-                        // arbitrary threshold that most controllers should be able to meet.
-                        var threshold = 1200;
-                        if (sdlEvent.caxis.axisValue >= (short.MaxValue - threshold) || 
-                            sdlEvent.caxis.axisValue <= (short.MinValue + threshold))
-                        {
-                            _dispatcher.Invoke(OnControllerAxisButtonMotion, sdlEvent.cdevice.which, sdlEvent.caxis.axis, sdlEvent.caxis.axisValue);
-                        }
-                        break;
-                }
             }
         }
 
@@ -462,8 +379,7 @@ namespace SoHConfig
 
         private void StartConfig()
         {
-            _inputThread = new Thread(new ThreadStart(InputThread));
-            _inputThread.Start();
+            _gamepadListener.Start();
 
             var backendSettingsString = _iniContext.GetGfxBackendValue();
             var backendIndex = FindBackendIndexFromSettingsString(backendSettingsString);
@@ -490,10 +406,7 @@ namespace SoHConfig
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (_inputThread != null)
-            {
-                _cancellationTokenSource.Cancel();
-            }
+            _gamepadListener.Stop();
         }
 
         private void DPadUpButton_Click(object sender, RoutedEventArgs e)

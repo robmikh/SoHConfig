@@ -32,6 +32,23 @@ namespace SoHConfig
             return binding;
         }
 
+        public string GetGfxBackendValue()
+        {
+            var index = GetGfxBackendIndex();
+            if (index.HasValue)
+            {
+                var line = _lines[index.Value];
+                var value = line.Replace("gfx backend=", "").Trim();
+                return value;
+            }
+            else
+            {
+                // TODO: Not sure this is possible, soh.exe always
+                // generates a backend entry.
+                throw new NotImplementedException();
+            }
+        }
+
         public void SaveBinding(ControllerBinding binding)
         {
             // Save a backup of the previous config just in case and for bug repros.
@@ -56,6 +73,25 @@ namespace SoHConfig
                 _lines = list.ToArray();
                 // TODO: Update instead of overwrite
                 File.WriteAllLines(_path, _lines);
+            }
+        }
+
+        public void SaveGfxBackend(string value)
+        {
+            // Save a backup of the previous config just in case and for bug repros.
+            File.WriteAllLines(_path + ".backup", _lines);
+            var index = GetGfxBackendIndex();
+            if (index.HasValue)
+            {
+                _lines[index.Value] = $"gfx backend={value}";
+                // TODO: Update instead of overwrite
+                File.WriteAllLines(_path, _lines);
+            }
+            else
+            {
+                // TODO: Not sure this is possible, soh.exe always
+                // generates a backend entry.
+                throw new NotImplementedException();
             }
         }
 
@@ -88,6 +124,28 @@ namespace SoHConfig
                 return (startIndex, endIndex);
             }
             return null;
+        }
+
+        private int? GetGfxBackendIndex()
+        {
+            var index = -1;
+            for (int i = 0; i < _lines.Length; i++)
+            {
+                var line = _lines[i];
+                if (line.StartsWith("gfx backend="))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index < 0)
+            {
+                return null;
+            }
+            else
+            {
+                return index;
+            }
         }
     }
 

@@ -91,6 +91,18 @@ namespace SoHConfig
         TriggerRight,
     }
 
+    class BackendEntry
+    {
+        public string DisplayName { get; }
+        public string SettingsString { get; }
+
+        public BackendEntry(string displayName, string settings)
+        {
+            DisplayName = displayName;
+            SettingsString = settings;
+        }
+    }
+
     public partial class MainWindow : Window
     {
         private Thread _inputThread;
@@ -102,6 +114,7 @@ namespace SoHConfig
 
         private ObservableCollection<ControllerInfo> _controllers;
         private Dictionary<int, ControllerInfo> _controllerMap;
+        private ObservableCollection<BackendEntry> _backends;
 
         private int? _currentController;
         private N64ControllerButton? _activeButton;
@@ -118,8 +131,13 @@ namespace SoHConfig
             _currentController = null;
             _activeButton = null;
 
+            _backends = new ObservableCollection<BackendEntry>();
+            _backends.Add(new BackendEntry("Direct3D11", ""));
+            _backends.Add(new BackendEntry("OpenGL", "sdl"));
+
             ConfigGrid.Visibility = Visibility.Collapsed;
             ControllerComboBox.ItemsSource = _controllers;
+            BackendComboBox.ItemsSource = _backends;
             BindingGrid.Visibility = Visibility.Collapsed;
         }
 
@@ -444,6 +462,28 @@ namespace SoHConfig
         {
             _inputThread = new Thread(new ThreadStart(InputThread));
             _inputThread.Start();
+
+            var backendSettingsString = _iniContext.GetGfxBackendValue();
+            var backendIndex = FindBackendIndexFromSettingsString(backendSettingsString);
+            if (backendIndex.HasValue)
+            {
+                BackendComboBox.SelectedIndex = backendIndex.Value;
+            }
+        }
+
+        private int? FindBackendIndexFromSettingsString(string value)
+        {
+            int? index = null;
+            for (int i = 0; i < _backends.Count; i++)
+            {
+                var backend = _backends[i];
+                if (backend.SettingsString == value)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            return index;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -618,6 +658,15 @@ namespace SoHConfig
                 MessageBoxButton.OK, 
                 MessageBoxImage.Information, 
                 MessageBoxResult.OK);
+        }
+
+        private void WindowSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            var backendEntry = BackendComboBox.SelectedItem as BackendEntry;
+            if (backendEntry != null)
+            {
+                _iniContext.SaveGfxBackend(backendEntry.SettingsString);
+            }
         }
     }
 }

@@ -225,7 +225,12 @@ namespace SoHConfig
                         _dispatcher.Invoke(OnControllerButtonPressed, sdlEvent.cdevice.which, sdlEvent.cbutton.button);
                         break;
                     case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
-                        if (sdlEvent.caxis.axisValue == short.MaxValue || sdlEvent.caxis.axisValue == short.MinValue)
+                        // Not all controllers reliably hit the max or min values. We don't
+                        // want just any movement to trigger a binding, so we'll pick an 
+                        // arbitrary threshold that most controllers should be able to meet.
+                        var threshold = 1200;
+                        if (sdlEvent.caxis.axisValue >= (short.MaxValue - threshold) || 
+                            sdlEvent.caxis.axisValue <= (short.MinValue + threshold))
                         {
                             _dispatcher.Invoke(OnControllerAxisButtonMotion, sdlEvent.cdevice.which, sdlEvent.caxis.axis, sdlEvent.caxis.axisValue);
                         }

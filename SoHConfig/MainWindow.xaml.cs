@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -666,6 +668,34 @@ namespace SoHConfig
             if (backendEntry != null)
             {
                 _iniContext.SaveGfxBackend(backendEntry.SettingsString);
+            }
+        }
+
+        private void CheckROMButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog();
+            dialog.Filter = "N64 ROM files | *.z64";
+            if (dialog.ShowDialog() == true)
+            {
+                var path = dialog.FileName;
+                var buffer = File.ReadAllBytes(path);
+                using (var cyptoProvider = HashAlgorithm.Create("SHA1"))
+                {
+                    var hash = BitConverter.ToString(cyptoProvider.ComputeHash(buffer)).Replace("-", "").ToLower();
+                    var message = "You're using the wrong ROM!";
+                    var icon = MessageBoxImage.Error;
+                    if (hash == "cee6bc3c2a634b41728f2af8da54d9bf8cc14099")
+                    {
+                        message = "You're using the right ROM! Good job!";
+                        icon = MessageBoxImage.Information;
+                    }
+                    System.Windows.MessageBox.Show(
+                        $"Hash: {hash}\n{message}",
+                        "ROM Checker",
+                        MessageBoxButton.OK,
+                        icon,
+                        MessageBoxResult.OK);
+                }
             }
         }
     }

@@ -34,6 +34,8 @@ namespace SoHConfig
 
         public void SaveBinding(ControllerBinding binding)
         {
+            // Save a backup of the previous config just in case and for bug repros.
+            File.WriteAllLines(_path + ".backup", _lines);
             var range = GetControllerBindingRange(binding.GuidString);
             if (range.HasValue)
             {

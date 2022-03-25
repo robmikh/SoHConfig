@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -137,16 +138,9 @@ namespace SoHConfig
         {
             if (_activeButton.HasValue && _currentController.HasValue && id == _currentController.Value)
             {
-                var uiButton = GetUIButtonForN64Button(_activeButton.Value);
                 var sdlButton = (SDL.SDL_GameControllerButton)button;
                 var displayString = sdlButton.ToString().Replace("SDL_CONTROLLER_BUTTON_", "");
-                uiButton.Content = displayString;
-
-                var binding = _bindingMap[id];
-                binding.SetButtonBinding(_activeButton.Value, button);
-
-                _activeButton = null;
-                uiButton.IsChecked = false;
+                SetButtonBindingForController(id, _activeButton.Value, button, displayString);
             }
         }
 
@@ -154,7 +148,6 @@ namespace SoHConfig
         {
             if (_activeButton.HasValue && _currentController.HasValue && id == _currentController.Value)
             {
-                var uiButton = GetUIButtonForN64Button(_activeButton.Value);
                 var sdlAxis = (SDL.SDL_GameControllerAxis)axis;
                 var displayString = sdlAxis.ToString().Replace("SDL_CONTROLLER_AXIS_", "");
                 var modifier = 0;
@@ -168,12 +161,21 @@ namespace SoHConfig
                     displayString += "-";
                     modifier = -1;
                 }
-                uiButton.Content = displayString;
-                var binding = _bindingMap[id];
-                binding.SetButtonBinding(_activeButton.Value, (axis + (1 << 9)) * modifier);
-                _activeButton = null;
-                uiButton.IsChecked = false;
+                var bindingValue = (axis + (1 << 9)) * modifier;
+                SetButtonBindingForController(id, _activeButton.Value, bindingValue, displayString);
             }
+        }
+
+        private void SetButtonBindingForController(int controllerId, N64ControllerButton button, int value, string displayString)
+        {
+            Debug.Assert(_activeButton.HasValue && _activeButton.Value == button);
+
+            var uiButton = GetUIButtonForN64Button(button);
+            uiButton.Content = displayString;
+            var binding = _bindingMap[controllerId];
+            binding.SetButtonBinding(button, value);
+            _activeButton = null;
+            uiButton.IsChecked = false;
         }
 
         private ToggleButton GetUIButtonForN64Button(N64ControllerButton button)

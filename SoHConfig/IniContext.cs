@@ -77,6 +77,7 @@ namespace SoHConfig
                     else
                     {
                         endIndex = i;
+                        break;
                     }
                 }
             }

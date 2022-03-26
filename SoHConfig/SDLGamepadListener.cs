@@ -1,5 +1,6 @@
 ﻿using SDL2;
 using System;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Windows.Threading;
@@ -100,30 +101,36 @@ namespace SoHConfig
             var token = _cancellationTokenSource.Token;
             while (!token.IsCancellationRequested)
             {
-                SDL.SDL_PollEvent(out var sdlEvent);
-
-                switch (sdlEvent.type)
+                if (SDL.SDL_WaitEvent(out var sdlEvent) == 1)
                 {
-                    case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
-                        _dispatcher.Invoke(OnControllerDeviceAdded, sdlEvent.cdevice.which);
-                        break;
-                    case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
-                        _dispatcher.Invoke(OnControllerDeviceRemoved, sdlEvent.cdevice.which);
-                        break;
-                    case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
-                        _dispatcher.Invoke(OnControllerButtonPressed, sdlEvent.cdevice.which, sdlEvent.cbutton.button);
-                        break;
-                    case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
-                        // Not all controllers reliably hit the max or min values. We don't
-                        // want just any movement to trigger a binding, so we'll pick an 
-                        // arbitrary threshold that most controllers should be able to meet.
-                        var threshold = 1200;
-                        if (sdlEvent.caxis.axisValue >= (short.MaxValue - threshold) ||
-                            sdlEvent.caxis.axisValue <= (short.MinValue + threshold))
-                        {
-                            _dispatcher.Invoke(OnControllerAxisButtonMotion, sdlEvent.cdevice.which, sdlEvent.caxis.axis, sdlEvent.caxis.axisValue);
-                        }
-                        break;
+                    switch (sdlEvent.type)
+                    {
+                        case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
+                            _dispatcher.Invoke(OnControllerDeviceAdded, sdlEvent.cdevice.which);
+                            break;
+                        case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
+                            _dispatcher.Invoke(OnControllerDeviceRemoved, sdlEvent.cdevice.which);
+                            break;
+                        case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
+                            _dispatcher.Invoke(OnControllerButtonPressed, sdlEvent.cdevice.which, sdlEvent.cbutton.button);
+                            break;
+                        case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
+                            // Not all controllers reliably hit the max or min values. We don't
+                            // want just any movement to trigger a binding, so we'll pick an 
+                            // arbitrary threshold that most controllers should be able to meet.
+                            var threshold = 1200;
+                            if (sdlEvent.caxis.axisValue >= (short.MaxValue - threshold) ||
+                                sdlEvent.caxis.axisValue <= (short.MinValue + threshold))
+                            {
+                                _dispatcher.Invoke(OnControllerAxisButtonMotion, sdlEvent.cdevice.which, sdlEvent.caxis.axis, sdlEvent.caxis.axisValue);
+                            }
+                            break;
+                    }
+                }
+                else
+                {
+                    // TODO: Bubble the error up and close the application.
+                    Debug.WriteLine(SDL.SDL_GetError());
                 }
             }
         }
